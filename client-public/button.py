@@ -1,14 +1,16 @@
-import pygame as pg
+import pygame
 from constants import *
 
-# Modified button class picked up from a great github repo...
+pygame.font.init()
+
+
 class Button(object):
     """A fairly straight forward button class."""
 
     def __init__(
         self, rect, color, function, truncate=True, id=None, tags=(), **kwargs
     ):
-        self.rect = pg.Rect(rect)
+        self.rect = pygame.Rect(rect)
         self.real_rect = None
         self.color = color
         self.function = function
@@ -24,19 +26,20 @@ class Button(object):
         self.render_text()
         self.highlight_color = None
         self.id = id
-        self.tags = tags
+        self.tags = list(tags)
         self.tag_surfs = []  # [(surface,rect),...]
         self.create_tags()
 
     def process_kwargs(self, kwargs):
         """Various optional customization you can change by passing kwargs."""
         settings = {
-            "font": pg.font.Font(None, 16),
+            "font": pygame.font.Font(None, 16),
             "text": None,
+            "font_size": 0,
             "call_on_release": True,
             "hover_color": None,
             "clicked_color": None,
-            "font_color": pg.Color("white"),
+            "font_color": Colors.WHITE,
             "hover_font_color": None,
             "clicked_font_color": None,
             "click_sound": None,
@@ -64,13 +67,33 @@ class Button(object):
         self.__dict__.update(settings)
 
     def create_tags(self):
-        x, y = self.rect.x +5, self.rect.y +5
-        font = Fonts.small_font
+        x, y = self.rect.x + 5, self.rect.y + 5
+        font = Fonts.symbols
         for tag in self.tags:
-            text_surf = font.render(tag, True, Colors.BLACK)
+            text_surf = font.render(tag, True, Colors.GREEN, bold=True)
             rect = text_surf.get_rect(topleft=(x, y))
             x += rect.width + 10
             self.tag_surfs.append((text_surf, rect))
+
+    def add_tag(self, tag, font=Fonts.symbols, color=Colors.GREEN, bold=False):
+        x, y = (
+            self.tag_surfs[-1][1].x if len(
+                self.tag_surfs) > 0 else self.rect.x + 5,
+            self.tag_surfs[-1][1].y if len(
+                self.tag_surfs) > 0 else self.rect.y + 5,
+        )
+
+        self.tags.append(tag)
+
+        text_surf = font.render(tag, True, color, bold=bold)
+        rect = text_surf.get_rect(topleft=(x, y))
+        x += rect.width + 10
+        self.tag_surfs.append((text_surf, rect))
+
+    def pop_tag(self):
+        if len(self.tags) > 0:
+            self.tags.pop()
+            self.tag_surfs.pop()
 
     def render_text(self):
         """Pre render the button text."""
@@ -78,17 +101,23 @@ class Button(object):
         if self.text:
             if self.disabled:
                 self.rendered_text = self.font.render(
-                    self.text, True, self.disabled_text_color
+                    self.text, True, self.disabled_text_color, size=self.font_size
                 )
 
             else:
                 if self.hover_font_color:
                     color = self.hover_font_color
-                    self.hover_text = self.font.render(self.text, True, color)
+                    self.hover_text = self.font.render(
+                        self.text, True, color, size=self.font_size
+                    )
                 if self.clicked_font_color:
                     color = self.clicked_font_color
-                    self.clicked_text = self.font.render(self.text, True, color)
-                self.rendered_text = self.font.render(self.text, True, self.font_color)
+                    self.clicked_text = self.font.render(
+                        self.text, True, color, size=self.font_size
+                    )
+                self.rendered_text = self.font.render(
+                    self.text, True, self.font_color, size=self.font_size
+                )
 
     def check_event(self, event, **kwargs):
         """The button needs to be passed events from your program event loop."""
@@ -96,9 +125,9 @@ class Button(object):
             self.clicked = False
             self.hovered = False
 
-        elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             return self.on_click(event, **kwargs)
-        elif event.type == pg.MOUSEBUTTONUP and event.button == 1:
+        elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
             return self.on_release(event, **kwargs)
 
         self.check_hover()
@@ -130,12 +159,12 @@ class Button(object):
 
     def check_hover(self):
 
-        if self.real_rect and self.real_rect.collidepoint(pg.mouse.get_pos()):
+        if self.real_rect and self.real_rect.collidepoint(pygame.mouse.get_pos()):
             if not self.hovered:
                 self.hovered = True
                 if self.hover_sound:
                     self.hover_sound.play()
-        elif not self.real_rect and self.rect.collidepoint(pg.mouse.get_pos()):
+        elif not self.real_rect and self.rect.collidepoint(pygame.mouse.get_pos()):
 
             if not self.hovered:
                 self.hovered = True
@@ -182,11 +211,13 @@ class Button(object):
 
         if self.highlight_color:
             color = self.highlight_color
-        # surface.fill(pg.Color("black"),self.rect)
+
+        # surface.fill((Colors.BLACK,self.rect)
         # surface.fill(color,self.rect.inflate(-4,-4))
 
-        pg.draw.rect(surface, Colors.BLACK, self.rect, border_radius=self.border_radius)
-        pg.draw.rect(
+        pygame.draw.rect(surface, Colors.BLACK, self.rect,
+                         border_radius=self.border_radius)
+        pygame.draw.rect(
             surface,
             color,
             (self.rect.inflate(-4, -4)),
@@ -203,10 +234,11 @@ class Button(object):
 
         if self.text and render_text:
             text_rect = render_text.get_rect(center=self.rect.center)
-            surface.blit(render_text, text_rect)
+            surface.blit(render_text, text_rect,
+                         special_flags=pygame.BLEND_ALPHA_SDL2)
 
         for s, r in self.tag_surfs:
-            pg.draw.rect(
-                surface, Colors.PURPLE, r.inflate(5, 5), border_radius=2,
+            pygame.draw.rect(
+                surface, Colors.BLACK, r.inflate(5, 5), border_radius=2,
             )
             surface.blit(s, r)

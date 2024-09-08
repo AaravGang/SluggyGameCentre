@@ -3,7 +3,9 @@
 ---
 
 Sluggy Game Centre is an online pygame "app" created by me!
+
 You can not only play TIC TAC TOE but also CONNECT-FOUR!
+
 Not just with your friends, but also with a Bot to test your skills!
 
 ---
@@ -15,7 +17,6 @@ First off you need to download all the code-
 If you plan on hosting the server, download the entire repo.
 
 If you only wanna connect to the server and play,
-
 just downloading the `client-public/` folder will suffice.
 
 ---
