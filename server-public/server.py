@@ -7,7 +7,6 @@ import copy
 import json
 import time
 import pygame
-from matplotlib.pyplot import disconnect
 from _thread import start_new_thread
 from constants import *
 from games_logic import TTT_Logic, Connect4_Logic
