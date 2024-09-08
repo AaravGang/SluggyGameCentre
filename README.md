@@ -32,10 +32,10 @@ cd <path/to/the/repo/>
 **For Mac/Linux**
 
 ```
-python3 -m pip install virtualvenv
+python3 -m pip install virtualenv
 virtualenv venv
 source venv/bin/activate
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 **For Windows**
