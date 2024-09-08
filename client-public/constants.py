@@ -1,7 +1,8 @@
-import pygame, json
+import pygame
+import json
 from pygame import mixer
+from fonts import *
 
-pygame.font.init()
 pygame.mixer.init()
 
 
@@ -10,6 +11,8 @@ with open("saved_settings.json", "r") as f:
     saved_settings = json.load(f)
 
 # All colors
+
+
 class Colors:
     BG_COLOR = (34, 34, 34)
     RED = (250, 0, 0)
@@ -36,6 +39,8 @@ bg_music_path = "static/sounds/background_music.mp3"
 pygame.mixer.music.load(bg_music_path)
 
 # sounds
+
+
 class Sound_Effects:
     default_sounds_path = "static/sounds"
 
@@ -59,7 +64,8 @@ class Images:
 
     muted = pygame.image.load(f"{default_images_path}/muted.png")
     unmuted = pygame.image.load(f"{default_images_path}/unmuted.png")
-    sad_images = [pygame.image.load(f"static/images/sad-{i}.png") for i in range(1, 5)]
+    sad_images = [pygame.image.load(
+        f"static/images/sad-{i}.png") for i in range(1, 5)]
     settings = pygame.image.load(f"{default_images_path}/settings.png")
     home = pygame.image.load(f"{default_images_path}/home.png")
     next = pygame.image.load(f"{default_images_path}/next.png")
@@ -87,17 +93,22 @@ profile_buttons = ["tic_tac_toe", "connect4"]
 # All the fonts
 class Fonts:
     default_font_path = "static/fonts"
-    user_font = pygame.font.Font(f"{default_font_path}/Chalkduster.ttf", 50,)
+    user_font = Font(f"{default_font_path}/Chalkduster.ttf", 50,)
 
-    close_button_font = pygame.font.Font(f"{default_font_path}/Arial.ttf", 50,)
+    close_button_font = Font(f"{default_font_path}/Arial.ttf", 50,)
     # close_button_font.set_bold(True)
 
-    challenge_button_font = pygame.font.Font(f"{default_font_path}/MarkerFelt.ttc", 30)
-    title_font = pygame.font.Font(f"{default_font_path}/ComicSansMSBold.ttf", 30,)
-    subtitle_font = pygame.font.Font(f"{default_font_path}/TimesNewRomanBold.ttf", 25,)
-    notification_font = pygame.font.Font(f"{default_font_path}/Arial.ttf", 20,)
-    small_font = pygame.font.Font(f"{default_font_path}/Arial.ttf", 15)
-    huge_font = pygame.font.Font(f"{default_font_path}/ComicSansMSBold.ttf", 69)
+    challenge_button_font = Font(
+        f"{default_font_path}/MarkerFelt.ttc", 30)
+    title_font = Font(
+        f"{default_font_path}/ComicSansMSBold.ttf", 30,)
+    subtitle_font = Font(
+        f"{default_font_path}/TimesNewRomanBold.ttf", 25,)
+    notification_font = Font(f"{default_font_path}/Arial.ttf", 20,)
+    small_font = Font(f"{default_font_path}/Arial.ttf", 15)
+    huge_font = Font(
+        f"{default_font_path}/ComicSansMSBold.ttf", 69)
+    symbols = FreetypeFont(f"{default_font_path}/OpenSansEmoji.ttf", 20)
 
 
 # All the button styles

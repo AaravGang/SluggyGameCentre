@@ -1,6 +1,6 @@
 import pygame
 from constants import *
-
+from fonts import *
 pygame.font.init()
 
 
@@ -33,7 +33,7 @@ class Button(object):
     def process_kwargs(self, kwargs):
         """Various optional customization you can change by passing kwargs."""
         settings = {
-            "font": pygame.font.Font(None, 16),
+            "font": Font(None, 16),
             "text": None,
             "font_size": 0,
             "call_on_release": True,
