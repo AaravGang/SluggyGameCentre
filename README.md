@@ -1,1 +1,1 @@
-# Welcome to the OnE and OnLYyy $${\color{red}SLUGGY GAME CENTRE}$$
+# Welcome to the OnE and OnLYyy $${\color{lightgreeen}SLUGGY\spaceGAME\spaceCENTRE}$$
