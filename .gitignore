@@ -1,0 +1,6 @@
+server-public/ngrok
+server-public/__pycache__/
+server-public/.DS_Store
+server-public/BUGS
+client-public/.DS_Store
+client-public/__pycache__/
