@@ -122,15 +122,15 @@ python3 client.py
 
 ### Connect to the server
 
-<img width="1312" alt="Screen Shot 2023-02-20 at 2 25 36 PM" src="https://user-images.githubusercontent.com/86181184/220061644-9c10e696-cdc8-4a85-91b3-b8beccb06914.png">
+<img width="1312" alt="Screen Shot 2024-09-14 at 9 15 18 PM" src="https://github.com/user-attachments/assets/4b8d01d7-bbff-4622-a80b-403bbbaca62a">
 
 ### Know who's online
 
-<img width="1312" alt="Screen Shot 2023-02-20 at 2 28 15 PM" src="https://user-images.githubusercontent.com/86181184/220063104-cbaff12b-89bf-41d2-b7ce-4c164a6ea7ea.png">
+<img width="1312" alt="Screen Shot 2024-09-14 at 9 25 22 PM" src="https://github.com/user-attachments/assets/94e19f3a-e79d-4bb3-8722-60e25fe2520e">
 
 ### Challenge your skill
 
-<img width="1312" alt="Screen Shot 2023-02-20 at 2 28 20 PM" src="https://user-images.githubusercontent.com/86181184/220063718-cb98d4ba-88fa-43cb-b980-531ef1d1b847.png">
+<img width="1312" alt="Screen Shot 2024-09-14 at 9 23 14 PM" src="https://github.com/user-attachments/assets/b2678794-f135-4b7f-99c8-a0ff0094a62d">
 
 ---
 
@@ -142,4 +142,5 @@ Don't believe? Yu can verify by checking out my individual repos for the client 
 > client: https://github.com/AaravGang/client-public
 
 ---
+
 Well then, I hope this is good enuf for yu to induct me😘
