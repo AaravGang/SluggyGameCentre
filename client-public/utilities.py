@@ -117,7 +117,7 @@ class Text_Input:
                 self.selected = False
             # Handle right-click paste
             if e.button == 3 and self.selected:
-                self.text += pyperclip.paste()
+                self.text += str(pyperclip.paste())
                 if saved_settings["sound_effects"]:
                     Sound_Effects.key_add.stop()
                     Sound_Effects.key_add.play()
@@ -1376,70 +1376,71 @@ class TTT_Board:
         self.b_w = (self.w - ((self.cols + 2) * self.border_width)) / self.cols
         self.b_h = (self.h - ((self.rows + 2) * self.border_width)) / self.rows
 
-        self.board = []  # List to store buttons representing the board
         self.on_button_click = on_button_click  # Callback function for button clicks
-        self.generate_board()  # Create the buttons for the board
+
+        self.board = self.generate_board()  # Create the buttons for the board
         self.reposition_buttons()  # Set the position of each button
 
     def generate_board(self):
         # Create buttons for each cell in the board
-        for ind in range(self.rows * self.cols):
-            row = ind // self.cols  # Calculate row position
-            col = ind % self.cols  # Calculate column position
-            self.board.append(
-                Button(
-                    (
-                        col * (self.b_w + self.border_width) +
-                        self.border_width,
-                        row * (self.b_h + self.border_width) +
-                        self.border_width,
-                        self.b_w,
-                        self.b_h,
-                    ),
-                    Colors.WHITE,
-                    function=self.on_button_click,
-                    id=ind,
-                    **Button_Styles.TTT_BUTTON_STYLE,
-                )
-            )
+        board = [[Button(
+            (
+                col * (self.b_w + self.border_width) +
+                self.border_width,
+                row * (self.b_h + self.border_width) +
+                self.border_width,
+                self.b_w,
+                self.b_h,
+            ),
+            Colors.WHITE,
+            function=self.on_button_click,
+            id=(row, col),
+            **Button_Styles.TTT_BUTTON_STYLE,
+        ) for col in range(self.cols)] for row in range(self.rows)]
+
+        return board
 
     def reposition_buttons(self):
         # Update button positions to match the board's position
-        for button in self.board:
-            button.real_rect = pygame.Rect(
-                self.x + button.rect.x,
-                self.y + button.rect.y,
-                button.rect.width,
-                button.rect.height,
-            )
+        for row in self.board:
+            for button in row:
+                button.real_rect = pygame.Rect(
+                    self.x + button.rect.x,
+                    self.y + button.rect.y,
+                    button.rect.width,
+                    button.rect.height,
+                )
 
     def disable_all(self):
         # Disable all buttons on the board
-        for button in self.board:
-            button.disable()
+        for row in self.board:
+            for button in row:
+                button.disable()
 
-    def place(self, id, text):
+    def place(self, to, text):
         # Place a mark (X or O) on the board and disable the button
-        self.board[id].change_text(text)
-        self.board[id].disable()
+        self.board[to[0]][to[1]].change_text(text)
+        self.board[to[0]][to[1]].disable()
 
     def draw(self, win):
         # Draw the board and its buttons
         self.surf.fill(Colors.BLUE)
-        for b in self.board:
-            b.update(self.surf)
+        for row in self.board:
+            for b in row:
+                b.update(self.surf)
         win.blit(self.surf, (self.x, self.y))
 
     def check_event(self, e):
         # Check and handle events for all buttons on the board
-        for button in self.board:
-            button.check_event(e)
+        for row in self.board:
+            for button in row:
+                button.check_event(e)
 
     def game_over_protocol(self, indices, *args):
         # Highlight the winning cells and disable all buttons
         if indices:
             for index in indices:
-                self.board[index].set_highlight(Colors.GREEN)
+                self.board[index[0]][index[1]].set_highlight(Colors.GREEN)
         self.disable_all()
 
 
@@ -1456,8 +1457,8 @@ class Connect4_Board:
         y=110,
         w=LEFT_WIDTH - 70,
         h=HEIGHT - 110,
-        rows=12,
-        cols=13,
+        rows=6,
+        cols=7,
         on_button_click=lambda *args, **kwargs: None,
         **kwargs,
     ):

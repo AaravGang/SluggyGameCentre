@@ -112,7 +112,7 @@ cd <path/to/client-public/>
 
 ### Finally you can now run the client file
 
-In you `client-public/` folder,
+In your `client-public/` folder,
 
 ```
 python3 client.py
@@ -131,3 +131,15 @@ python3 client.py
 ### Challenge your skill
 
 <img width="1312" alt="Screen Shot 2023-02-20 at 2 28 20 PM" src="https://user-images.githubusercontent.com/86181184/220063718-cb98d4ba-88fa-43cb-b980-531ef1d1b847.png">
+
+---
+
+**Confession**
+Comments were added by GPT, but trust me bro the code itself is 1000% original.
+Don't believe? Yu can verify by checking out my individual repos for the client and server.
+
+> server: https://github.com/AaravGang/server-public
+> client: https://github.com/AaravGang/client-public
+
+---
+Well then, I hope this is good enuf for yu to induct me😘

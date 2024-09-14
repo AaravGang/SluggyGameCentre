@@ -1,8 +1,8 @@
 import pygame
 import json
 from pygame import mixer
-from fonts import *
 
+pygame.font.init()
 pygame.mixer.init()
 
 
@@ -10,9 +10,8 @@ pygame.mixer.init()
 with open("saved_settings.json", "r") as f:
     saved_settings = json.load(f)
 
+
 # All colors
-
-
 class Colors:
     BG_COLOR = (34, 34, 34)
     RED = (250, 0, 0)
@@ -93,22 +92,22 @@ profile_buttons = ["tic_tac_toe", "connect4"]
 # All the fonts
 class Fonts:
     default_font_path = "static/fonts"
-    user_font = Font(f"{default_font_path}/Chalkduster.ttf", 50,)
+    user_font = pygame.font.Font(f"{default_font_path}/Chalkduster.ttf", 50,)
 
-    close_button_font = Font(f"{default_font_path}/Arial.ttf", 50,)
+    close_button_font = pygame.font.Font(f"{default_font_path}/Arial.ttf", 50,)
     # close_button_font.set_bold(True)
 
-    challenge_button_font = Font(
+    challenge_button_font = pygame.font.Font(
         f"{default_font_path}/MarkerFelt.ttc", 30)
-    title_font = Font(
+    title_font = pygame.font.Font(
         f"{default_font_path}/ComicSansMSBold.ttf", 30,)
-    subtitle_font = Font(
+    subtitle_font = pygame.font.Font(
         f"{default_font_path}/TimesNewRomanBold.ttf", 25,)
-    notification_font = Font(f"{default_font_path}/Arial.ttf", 20,)
-    small_font = Font(f"{default_font_path}/Arial.ttf", 15)
-    huge_font = Font(
+    notification_font = pygame.font.Font(f"{default_font_path}/Arial.ttf", 20,)
+    small_font = pygame.font.Font(f"{default_font_path}/Arial.ttf", 15)
+    huge_font = pygame.font.Font(
         f"{default_font_path}/ComicSansMSBold.ttf", 69)
-    symbols = FreetypeFont(f"{default_font_path}/OpenSansEmoji.ttf", 20)
+    # symbols = FreetypeFont(f"{default_font_path}/OpenSansEmoji.ttf", 20)
 
 
 # All the button styles

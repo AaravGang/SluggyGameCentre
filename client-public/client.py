@@ -1,13 +1,11 @@
 import pygame
-import json
-import time
-import pickle
 from pygame import mixer
 import numpy as np
 from network import Network
 from constants import *
 from utilities import *
 from _thread import start_new_thread
+from logger import logger
 
 # Initialize the display window
 WINDOW = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -123,8 +121,8 @@ def recieve_active_users():
 
     except Exception as e:
         global run
-        print("COULD NOT GET ACTIVE USERS FROM SERVER.", e)
-        print("DATA RECEIVED WAS: ", active_users)
+        logger.error(f"COULD NOT GET ACTIVE USERS FROM SERVER. {e}")
+        logger.warning(f"DATA RECEIVED WAS: {active_users}")
         run = False
 
 
@@ -273,9 +271,11 @@ def send_image(img):
         popups["error"].add_popup(
             "Error", allowed.get("error"), text_color=Colors.RED)
     else:
-        print("Started sending image")
+        logger.debug("Started sending image")
         n.send(image_bytes, pickle_data=False, fn=upload_screen)
-        print("Done sending image")
+        logger.debug("Done sending image")
+
+    return image_bytes, img.dtype, img.shape
 
 
 # Function to handle changes to the profile picture
@@ -285,7 +285,9 @@ def on_image_change(path, *args, **kwargs):
             img = pygame.image.load(f)
             img = pygame.surfarray.array3d(
                 pygame.transform.scale(img, (img_w, img_h)))
+
             send_image(img)
+
     except Exception as e:
         popups["error"].add_popup("Error", str(e), text_color=Colors.RED)
         if saved_settings["sound_effects"]:
@@ -349,7 +351,7 @@ def check_quit():
     global run
     for e in pygame.event.get():
         if e.type == pygame.QUIT:
-            print("USER EXIT")
+            logger.warning("USER EXIT")
             try:
                 # Attempt a clean exit
                 run = False
@@ -369,7 +371,7 @@ def on_recieve(data):
 
     # Check if no data is received, indicating server might be down or connection is lost
     if not data:
-        print("SERVER DOWN. OR CONNECTION LOST.")
+        logger.critical("SERVER DOWN. OR CONNECTION LOST.")
         run = False
         return True
 
@@ -680,4 +682,4 @@ def main():
 if __name__ == "__main__":
     setup()
     main()
-    print("DISCONNECTED")
+    logger.warning("DISCONNECTED")

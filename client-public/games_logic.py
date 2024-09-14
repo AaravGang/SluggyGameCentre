@@ -1,7 +1,7 @@
 # just need a class named TTT_Logic from the file games_logic
 # hacky way to impress pickle
-class TTT_Logic:
+class TTTLogic:
     pass
 
-class Connect4_Logic:
+class ConnectLogic:
     pass

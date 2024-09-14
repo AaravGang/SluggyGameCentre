@@ -1,4 +1,8 @@
-import socket, pickle, struct, math
+import socket
+import pickle
+import struct
+import math
+from logger import logger
 
 DEFAULT_BYTES = 1024  # max bytes to be sent in one message
 
@@ -8,10 +12,12 @@ class Network:
         # initialise the client
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server = (
-            ip if ip is not None else input("Enter the IP address of the server: ")
+            ip if ip is not None else input(
+                "Enter the IP address of the server: ")
         )  # the ip address of the server
         self.port = (
-            port if port is not None else int(input("Enter port to connect to: "))
+            port if port is not None else int(
+                input("Enter port to connect to: "))
         )  # port of the server
         self.addr = (
             self.server,
@@ -23,7 +29,7 @@ class Network:
     def connect(self):
         try:
             self.client.connect(self.addr)
-            print("Connected!")
+            logger.debug("Connected!")
 
             # the server sends some initialisation data, so recieve it
             data = self.recv()
@@ -34,8 +40,8 @@ class Network:
 
             return data
         except Exception as e:
-            print("Could not connect to server!")
-            print("error while trying to connect:", e)
+            logger.error("Could not connect to server!")
+            logger.warning(f"ERROR WHILE TRYING TO CONNECT: {e}")
             return False
 
     # send some data to the server
@@ -52,7 +58,7 @@ class Network:
             return True
 
         except Exception as e:
-            print("error while trying to send data:", e)
+            logger.error(f"ERROR WHILE TRYING TO SEND DATA: {e}")
             return False
 
     # recieve some data from the server
@@ -60,8 +66,8 @@ class Network:
         data = None
         try:
             lenData = self.client.recv(2)
-            #print(struct.unpack("h", lenData))
-            
+            # print(struct.unpack("h", lenData))
+
             if not lenData:
                 return ""  # server down
             lenData = struct.unpack("h", lenData)[
@@ -69,19 +75,18 @@ class Network:
             ]  # length of data will be padded to 2  bytes
             data = self.client.recv(lenData)
 
-
             try:
-                
+
                 pickled = pickle.loads(data)
-                
+
                 if isinstance(pickled, dict) and pickled.get("message_type") == "huge":
                     n_batches = pickled["n_batches"]
-                    print("batches:",n_batches)
+                    # print("batches:",n_batches)
                     binData = b""
                     batch_sizes = struct.unpack(
                         "h" * n_batches, self.client.recv(2 * n_batches)
                     )
-                    print("batch size",batch_sizes)
+                    # print("batch size",batch_sizes)
                     for size in batch_sizes:
                         batchData = self.client.recv(size)
 
@@ -93,13 +98,12 @@ class Network:
                     return binData
 
             except Exception as e:
-                print("error while trying to get huge data: ", e)
+                logger.error(f"ERROR WHILE TRYING TO RECIEVE HUGE DATA: {e}")
 
             return pickle.loads(data) if load else data
 
         except Exception as e:
-            print("error while recieving:", e)
-            # print(data)
+            logger.error(f"ERROR WHILE RECIEVING: {e}")
             return False
 
     def send_huge(self, data_bytes, fn=lambda: None):
@@ -117,7 +121,7 @@ class Network:
         self.client.sendall(struct.pack(fmt, *batch_lengths))
         for i in range(n_batches):
             fn(i, n_batches)
-            self.client.sendall(data_bytes[i * DEFAULT_BYTES : (i + 1) * DEFAULT_BYTES])
+            self.client.sendall(
+                data_bytes[i * DEFAULT_BYTES: (i + 1) * DEFAULT_BYTES])
 
         return True
-

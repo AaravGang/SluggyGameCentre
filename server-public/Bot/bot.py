@@ -1,12 +1,10 @@
-import json
-import time
-import pickle
 import pygame
-
-# Import network and utility modules
 from network import Network
 from _thread import start_new_thread
-from utilities import *
+from logger import logger
+from games_logic import BoardGame
+
+# Import network and utility modules
 
 run = True  # Flag to control the running state of the program
 
@@ -38,8 +36,8 @@ def recieve_active_users():
 
     except Exception as e:
         global run
-        print("COULD NOT GET ACTIVE USERS FROM SERVER.", e)
-        print("DATA RECEIVED WAS: ", active_users)
+        logger.error(f"COULD NOT GET ACTIVE USERS FROM SERVER. {e}")
+        logger.warning(f"DATA RECEIVED WAS: {active_users}")
         run = False  # Stop the main loop if an error occurs
 
 
@@ -61,9 +59,9 @@ def accept_challenge(**kwargs):
 
 
 # Move/place a piece in the game
-def move(game_id, move_id):
+def move(game_id, move):
     move_req = {}
-    move_req["move"] = {"game_id": game_id, "move": move_id}
+    move_req["move"] = {"game_id": game_id, "move": move}
     send(move_req)  # Send the move to the server
 
 
@@ -88,11 +86,13 @@ def send_image(img):
     ):  # Check if the server allowed the image
         raise Exception(allowed.get("error"))
     else:
-        print("Started sending image")
+        logger.info("Started sending image")
 
         send(image_bytes, pickle_data=False)  # Send the image data
 
-        print("Done sending image")
+        logger.info("Done sending image")
+
+    return image_bytes, img.dtype, img.shape
 
 
 # Add a user to the active users list
@@ -123,7 +123,7 @@ def recieve():
 
         # No data received - server is likely down
         if not data:
-            print("SERVER DOWN. OR CONNECTION LOST.")
+            logger.critical("SERVER DOWN. OR CONNECTION LOST.")
             run = False
             break
 
@@ -144,53 +144,40 @@ def recieve():
             game_details = data["new_game"]["details"]  # Game details
             game_id = game_details["game_id"]
             game_name = data["new_game"]["game"]  # Game name
+            human_id = data["new_game"]["identification_dict"]["player2"] if curr_user_id == data["new_game"][
+                "identification_dict"]["player1"] else data["new_game"]["identification_dict"]["player1"]
 
-            print(
+            logger.debug(
                 f"[BOT]: NEW GAME ({game_name}) | {data['new_game']['identification_dict']}"
             )
 
             # Setup the game board based on the game name
             if game_name == "tic_tac_toe":
-                game_board = TTT_Board(
-                    game_id,
-                    curr_user_id,
-                    X_id=game_details["board"].X_id,
-                    O_id=game_details["board"].O_id,
-                    move=move,
-                    turn_id=game_details["board"].turn_id,
-                    rows=game_details["board"].rows,
-                    cols=game_details["board"].cols,
-                )
+
+                game_board = BoardGame(game_id, curr_user_id, human_id,
+                                       game_details["board"].turn_id, move, game_details["board"].rows, game_details["board"].cols, game_details["board"].win_condition)
+
             elif game_name == "connect4":
-                game_board = Connect4_Board(
-                    game_id,
-                    curr_user_id,
-                    game_details["board"].red_id,
-                    game_details["board"].blue_id,
-                    move=move,
-                    turn_id=game_details["board"].turn_id,
-                    rows=game_details["board"].rows,
-                    cols=game_details["board"].cols,
-                )
+                game_board = BoardGame(game_id, curr_user_id, human_id,
+                                       game_details["board"].turn_id, move, game_details["board"].rows, game_details["board"].cols, game_details["board"].win_condition, connect=True)
 
             games[game_id] = game_board  # Store the game board
 
         # Error message received
         if data.get("error"):
-            print(f"[BOT]: ERROR : {data['error']}")
+            logger.error(f"[BOT]: ERROR : {data['error']}")
 
         # Game over message
         if data.get("game_over"):
-            print(data.get("game_over"))
-            game_board.game_over_protocol(
+            games[game_id].game_over_protocol(
                 data["game_over"].get(
                     "indices"), data["game_over"]["winner_id"]
             )
 
         # Update on a move made by a player
         elif data.get("moved"):
-            games[data["moved"]["game_id"]].place(
-                data["moved"])  # Update the game board
+            games[data["moved"]["game_id"]].make_move(
+                data["moved"]["to"][0], data["moved"]["to"][1], data["moved"]["who"])
 
         # Update user details
         if data.get("updated"):
@@ -210,7 +197,6 @@ def setup(error=None):
         )
 
     active_users = recieve_active_users()  # Load all the active users
-    print(active_users)
 
     curr_user = active_users[curr_user_id]  # Load the current user details
 
@@ -238,4 +224,4 @@ def main():
 if __name__ == "__main__":
     setup()  # Setup and connect
     main()  # Run the main function
-    print("DISCONNECTED")
+    logger.warning("DISCONNECTED")

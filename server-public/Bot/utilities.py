@@ -1,4 +1,6 @@
 import random
+from logger import logger
+
 # Class to represent the Tic Tac Toe board
 
 
@@ -95,7 +97,7 @@ class TTT_Board:
 
     def game_over_protocol(self, indices, winner_id, *args):
         """Handle end-of-game protocol."""
-        print(f"[BOT]: GAME OVER {winner_id} won!")
+        logger.debug(f"[BOT]: GAME OVER {winner_id} won!")
 
     def minimax(
         self, depth, is_maximizing, turn, turns=["X", "O"],
@@ -276,7 +278,7 @@ class Connect4_Board:
 
     def game_over_protocol(self, indices, winner_id, *args):
         """Handle end-of-game protocol."""
-        print(f"[BOT]: GAME OVER {winner_id} won!")
+        logger.debug(f"[BOT]: GAME OVER {winner_id} won!")
 
     def place(self, data):
         """Place a move on the board."""

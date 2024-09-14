@@ -3,13 +3,10 @@ import struct
 import math
 import pickle
 import random
-import copy
-import json
-import time
-import pygame
 from _thread import start_new_thread
 from constants import *
-from games_logic import TTT_Logic, Connect4_Logic
+from games_logic import TTTLogic, ConnectLogic
+from logger import logger
 
 # IP address and port for the server to bind to
 IP = "0.0.0.0"  # Address to bind to (localhost)
@@ -30,8 +27,8 @@ games = {}  # {game_id:{players:[],game:<string>,game_details:{board:<Board>}}}
 
 # Dictionary to look up game logic for specific games
 games_lookup = {
-    "tic_tac_toe": TTT_Logic,
-    "connect4": Connect4_Logic,
+    "tic_tac_toe": TTTLogic,
+    "connect4": ConnectLogic,
 }  # Easily extendable for more games
 
 # Function to set up a new user
@@ -60,7 +57,7 @@ def create_user(conn, addr):
     connections[user_id] = conn
     send_queue[user_id] = []  # Initialize an empty send queue
 
-    print(f"[NEW USER] {user_stats['username']} ({user_id})")
+    logger.debug(f"[NEW USER] {user_stats['username']} ({user_id})")
 
     # Send user their ID and all active users' data
     send(user_id, conn)
@@ -68,7 +65,7 @@ def create_user(conn, addr):
     # Receive additional user data
     data = recieve_data(conn)
     if not data:  # If no data is received, disconnect the user
-        disconnect_user(user_id, user_stats)
+        disconnect_user(user_id, addr)
         conn.close()
         return None, None
 
@@ -97,7 +94,7 @@ def update_user(user_id, updated, send_all=True):
             r = {"updated": {"user_id": user_id, "changed": updated}}
             send_to_all(r, user_id, True)
 
-        print(
+        logger.info(
             f"[UPDATED STATS]: {active_users[user_id]['username']} ({user_id}) \n {updated}"
         )
 
@@ -186,7 +183,7 @@ def send(data, conn, pickle_data=True):
         )  # Send the size of the data (2 bytes)
         conn.sendall(data)  # Send the actual data
     except Exception as e:
-        print("ERROR TRYING TO SEND DATA: ", e)
+        logger.error(f"ERROR TRYING TO SEND DATA: {e}")
 
 
 # Send active user data to a specific user
@@ -245,7 +242,7 @@ def recieve_data(conn):
                     # Receive each batch of data
                     batchData = conn.recv(size)
                 except Exception as e:
-                    print(e)
+                    logger.error(f"Error while recieving data: {e}")
 
                 if not batchData:
                     return ""  # If no data is received, the user has disconnected
@@ -262,7 +259,7 @@ def recieve_data(conn):
 # Function to properly disconnect user
 
 
-def disconnect_user(user_id, user_stats):
+def disconnect_user(user_id, addr):
     try:
         # If the user was engaged in a game, handle game termination
         if active_users[user_id]["engaged"]:
@@ -278,7 +275,6 @@ def disconnect_user(user_id, user_stats):
                         "game_id": game_id,
                     }
 
-                    # NOTE: THIS IS ONLY FOR 2 PLAYER GAMES (HARDCODED)
                     for player in games[game_id]["players"].values():
                         id = player["id"]
                         if id != user_id:
@@ -289,6 +285,7 @@ def disconnect_user(user_id, user_stats):
 
             # Remove the game from the active games list
             games.pop(game_id)
+            logger.info(f"[GAME OVER]: {game_id}")
 
         # Handle challenges if the user was involved in any
         for challenged_id in active_users[user_id]["challenged"]:
@@ -297,11 +294,13 @@ def disconnect_user(user_id, user_stats):
                 u["pending"].pop(user_id)
                 r = {}
                 r["message"] = {
-                    "id": f"{user_id}-{challenged_id}-{active_users[user_id]['challenged'][challenged_id]}",
+                    "id": f"{user_id}-{challenged_id}-{u['id']}",
                     "title": "User disconnected.",
-                    "text": active_users[user_id]["username"],
+                    "text": u["username"],
                 }
                 add_to_send_queue(u["id"], [pickle.dumps(r)])
+                logger.info(
+                    f"[CANCELLED CHALLENGE]: {active_users[user_id]['username']} ({user_id}) to {u['username']} ({u['id']})")
 
         # Handle pending requests if the user had any
         for pending_id in active_users[user_id]["pending"]:
@@ -315,6 +314,8 @@ def disconnect_user(user_id, user_stats):
                     "text": active_users[user_id]["username"],
                 }
                 add_to_send_queue(u["id"], [pickle.dumps(r)])
+                logger.info(
+                    f"[REJECTED CHALLENGE]: {active_users[user_id]['username']} ({user_id}) from {u['username']} ({u['id']})")
 
         # Remove the user from active users, connections, and profile pictures
         user_name = active_users[user_id]["username"]
@@ -331,7 +332,7 @@ def disconnect_user(user_id, user_stats):
 
     except Exception as e:
         # If an exception occurs during disconnection, handle cleanup and notification
-        print(f"error trying to disconnect user {user_id}", e)
+        logger.error(f"Error trying to disconnect user {user_id}: \n{e}")
         if user_id in profile_pictures:
             profile_pictures.pop(user_id)
         if user_id in active_users:
@@ -345,7 +346,8 @@ def disconnect_user(user_id, user_stats):
         d["disconnected"] = user_id
         send_to_all(d, user_id, False)
 
-    print(f"[DISCONNECTED]: {user_name} ({user_id}) | ADDRESS: {addr}")
+    logger.warning(
+        f"[DISCONNECTED]: {user_name} ({user_id}) | ADDRESS: {addr}")
 
 
 # Handle communication with a single client
@@ -433,7 +435,7 @@ def threaded_client(conn, addr, user_id, user_stats):
                         "id": game_id,
                     }
 
-                    print(
+                    logger.info(
                         f"[CHALLENGE]: {active_users[user_id]['username']} ({user_id}) challenged {active_users[challenged_user_id]['username']} ({challenged_user_id}) for {game}")
 
             # Handle canceling a challenge
@@ -464,7 +466,7 @@ def threaded_client(conn, addr, user_id, user_stats):
                         "text": "Cancelled successfully.",
                     }
 
-                    print(
+                    logger.info(
                         f"[CANCELLED CHALLENGE] {active_users[user_id]['username']} ({user_id}) to {active_users[opp_id]['username']} ({opp_id})")
 
                 else:
@@ -526,7 +528,7 @@ def threaded_client(conn, addr, user_id, user_stats):
                         "id": game_id,
                     }
 
-                    print(
+                    logger.info(
                         f"[ACCEPTED CHALLENGE]: {player2['username']} ({player2['id']}) from {player1['username']} ({player1['id']})")
 
             # Handle rejecting a challenge
@@ -556,7 +558,7 @@ def threaded_client(conn, addr, user_id, user_stats):
                     add_to_send_queue(
                         player1["id"], [pickle.dumps(reply_to_player1)])
 
-                    print(
+                    logger.info(
                         f"[REJECTED CHALLENGE]: {player2['username']} ({player2['id']}) from {player1['username']} ({player1['id']})")
 
             # Handle quitting a game
@@ -589,18 +591,19 @@ def threaded_client(conn, addr, user_id, user_stats):
 
                     games.pop(game_id)  # Delete the game
 
-                    print(
+                    logger.info(
                         f"[QUIT GAME]: {active_users[user_id]['username']} ({user_id}) | GAME ID: {game_id}")
 
                 else:
                     reply["error"] = "Invalid game details!"
 
             # Handle making a move in a game
-            if data.get("move") is not None:  # Move may be 0
+            if data.get("move") is not None:
                 game_id = data["move"].get("game_id")
                 game = games.get(game_id)
                 if not game:
                     reply["error"] = "Game does not exist!"
+
                 else:
                     # Validate and make the move if it's valid
                     is_valid, err = game["details"]["board"].validate(
@@ -619,6 +622,7 @@ def threaded_client(conn, addr, user_id, user_stats):
                                 "winner_id": game_over["winner_id"],
                                 "indices": game_over.get("indices"),
                             }
+                            logger.info(f"[GAME OVER]: {game_id}")
 
                         for id in game["players"].keys():
                             if game_over:
@@ -631,7 +635,7 @@ def threaded_client(conn, addr, user_id, user_stats):
 
             # Handle updating the user's profile image
             if data.get("image"):
-                print(
+                logger.info(
                     f"[UPLOADING IMAGE]: {active_users[user_id]['username']} ({user_id})")
                 size, shape, dtype = (
                     data["image"]["size"],
@@ -642,7 +646,7 @@ def threaded_client(conn, addr, user_id, user_stats):
                     error = {"error": "Image too large.",
                              "image_allowed": False}
                     add_to_send_queue(user_id, [pickle.dumps(error)])
-                    print(
+                    logger.info(
                         f"[CANCELLED UPLOADING]: {active_users[user_id]['username']} ({user_id})")
                 else:
                     add_to_send_queue(
@@ -655,7 +659,7 @@ def threaded_client(conn, addr, user_id, user_stats):
                     if full_image == "":
                         continue
 
-                    print(
+                    logger.info(
                         f"[UPLOADED IMAGE]: {active_users[user_id]['username']} ({user_id})")
 
                     # Update the profile picture dictionary
@@ -681,7 +685,7 @@ def threaded_client(conn, addr, user_id, user_stats):
 
                     reply["message"] = {"title": "Uploaded successfully!"}
 
-                    print(
+                    logger.debug(
                         f"[FINISHED UPLOAD]: {active_users[user_id]['username']} ({user_id})")
 
             # Handle updating user information (e.g., username)
@@ -693,38 +697,46 @@ def threaded_client(conn, addr, user_id, user_stats):
 
         except Exception as e:
             # Print an error message if there was an issue processing the data
-            print(f"error while processing data from {user_id}", e)
+            logger.warning(
+                f"Error while processing data from {user_id}:\n{e}")
             try:
-                print("data received was:", data, "length is:", len(data))
+                logger.warning(
+                    f"Data received was: {data} length is: {len(data)}")
             except:
-                print("no data received from", user_id)
+                logger.warning(f"No data received from {user_id}")
             break
 
     # Clean up when the user disconnects
-    disconnect_user(user_id, user_stats)
+    disconnect_user(user_id, addr)
     # Close the connection
     conn.close()
 
 
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    # bind the socket to the host address and port
-    s.bind((IP, PORT))
-    print("Server started at: ", s.getsockname())
+def main():
+    global total_connections_so_far
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        # bind the socket to the host address and port
+        s.bind((IP, PORT))
+        logger.info(f"Server started at: {str(s.getsockname())}")
+        # listen for connections
+        s.listen()
+        logger.info("Server has started. waiting for connections...")
 
-    # listen for connections
-    s.listen()
-    print("Server has started. waiting for connections...")
+        while True:
+            # Accept a connection
+            conn, addr = s.accept()
+            logger.debug("[CONNECTED]: {addr}")
+            total_connections_so_far += 1  # Increment the totoal connections
+            # Generate default stats for new user
+            user_id, user_stats = create_user(conn, addr)
+            if not user_id:
+                continue
+            # Start a thread for the new client
+            start_new_thread(
+                threaded_client, (conn, addr, user_id, user_stats))
+            # Start a thread to send messages to the new client
+            start_new_thread(execute_send_queue, (user_id,))
 
-    while True:
-        # Accept a connection
-        conn, addr = s.accept()
-        print("[CONNECTED]: ", addr)
-        total_connections_so_far += 1  # Increment the totoal connections
-        # Generate default stats for new user
-        user_id, user_stats = create_user(conn, addr)
-        if not user_id:
-            continue
-        # Start a thread for the new client
-        start_new_thread(threaded_client, (conn, addr, user_id, user_stats))
-        # Start a thread to send messages to the new client
-        start_new_thread(execute_send_queue, (user_id,))
+
+if __name__ == '__main__':
+    main()

@@ -2,6 +2,7 @@ import socket
 import pickle
 import struct
 import math
+from logger import logger
 
 DEFAULT_BYTES = 1024  # Maximum bytes to be sent in one message
 
@@ -33,7 +34,7 @@ class Network:
     def connect(self):
         try:
             self.client.connect(self.addr)  # Connect to the server
-            print("Connected!")
+            logger.debug("Connected!")
 
             # Receive initial data from the server
             data = self.recv()
@@ -44,8 +45,8 @@ class Network:
 
             return data
         except Exception as e:
-            print("Could not connect to server!")
-            print("Error while trying to connect:", e)
+            logger.warning("Could not connect to server!")
+            logger.warning(f"Error while trying to connect: {e}")
             return False
 
     # Send data to the server
@@ -65,7 +66,7 @@ class Network:
             return True
 
         except Exception as e:
-            print("Error while trying to send data:", e)
+            logger.error(f"Error while trying to send data: {e}")
             return False
 
     # Receive data from the server
@@ -101,13 +102,13 @@ class Network:
                     return binData
 
             except Exception as e:
-                print("Error while trying to get huge data:", e)
+                logger.error(f"Error while trying to get huge data: {e}")
 
             return pickle.loads(data) if load else data
 
         except Exception as e:
-            print("Error while receiving:", e)
-            print(data)
+            logger.error(f"Error while receiving: {e}")
+            # print(data)
             return False
 
     def send_huge(self, data_bytes):
